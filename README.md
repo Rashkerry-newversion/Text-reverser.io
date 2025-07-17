@@ -72,7 +72,7 @@ mkdir -p scripts src/main/java/app
 
 ### 3. Add files
 
-- Create below files justas seen in the file structure
+- Create below files justas seen in the file structure or clone repo
 - Place `TextReverser.java` in `src/main/java/app/`
 - Place `pom.xml` in the root
 - Place `setup_day1.sh` inside `scripts/`
@@ -122,6 +122,8 @@ text-reverser/
 │           └── TextReverser.java  # Backend Java logic
 │       └── webapp/
 │           └── index.jsp         # Simple HTML frontend
+│           └── WEB-INF/
+│               └── web.xml
 ├── pom.xml
 └── README.md
 ```
@@ -139,7 +141,7 @@ Make sure you have:
 
 ### Jenkins and Java Installation(Using Bash Script for Automation)
 
-- Create a new sh file for java and jenkins inastallation automation.
+- Create a new .sh file for java and jenkins inastallation automation.
 - Copy and paste contents of setup_day2.sh in this repo and run below commands
 
 ![New Folder Structure With Bash Script for day2](images/image3.png)
@@ -154,7 +156,7 @@ bash /scripts/setup_day2.sh            #Run file
 - After installation, run below commands:
 
 ```bash
-sudo systemctl status jenkins    #To Check is Jenkins is Running. You should something like in the below image to confirm it's running.Make sure it says active
+sudo systemctl status jenkins    #To Check if Jenkins is Running. You should something like in the below image to confirm it's running.Make sure it says active
 ```
 
 ![Jenkins Status](images/image5.png)
@@ -208,8 +210,29 @@ sudo cat /var/lib/jenkins/secrets/initialAdminPassword
 
 ### 3. 🧬 Configure Git
 
+- Create a Personal Access Token on GitHub
+    Go to GitHub Profile → Settings → Developer Settings
+    Click "Fine-grained tokens" or "Tokens (classic)"
+    Generate a new token with: all access (check every box)
+    Copy the token (you won’t see it again)
+
+- Add the Token to Jenkins Credentials
+    Open Jenkins → Dashboard
+    Go to Manage Jenkins → Credentials
+    Choose a domain (or use global)
+    Click “Add Credentials”
+      Select:
+      Kind: Username with password
+      Username: your GitHub username
+      Password: the token you copied from GitHub
+      Add a helpful ID like github-token
+      Save
+
+![GitHub Credentials](images/image15.png)
+
 - Under `Source Code Management`, select **Git**
 - Add your repo URL (create a GitHub repo if you haven’t already)
+- Under Credentials, select the token you added (github-token)
 
 ![Git Setup](images/image10.png)
 
@@ -225,25 +248,12 @@ sudo cat /var/lib/jenkins/secrets/initialAdminPassword
 
 ---
 
-### 5. 🧪 Add Post-Build Step (Optional)
-
-- Click `Add post-build action`
-- Choose `Archive the artifacts`
-- Files to archive: `target/*.jar`
-
-![Post Build](images/image12.png)
-
----
-
-### 6. 🚀 Save and Build
+### 5. 🚀 Save and Build
 
 - Click `Save`
 - Hit `Build Now`
 
-📸 _Screenshot Placeholder_
-```md
-![Build Success](images/day2-build-success.png)
-```
+![Build Success](images/image16.png)
 
 ---
 
