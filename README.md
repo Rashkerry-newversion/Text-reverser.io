@@ -265,7 +265,7 @@ sudo cat /var/lib/jenkins/secrets/initialAdminPassword
 
 ---
 
-## Day 7: Java WAR Deployment to Apache Tomcat Using Jenkins
+## Day 2: Java WAR Deployment to Apache Tomcat Using Jenkins
 
 Welcome to Day 7 of the Everyday DevOps series! Today we will:
 
@@ -378,7 +378,7 @@ sudo nano /opt/tomcat/conf/tomcat-users.xml
 sudo nano /opt/tomcat/webapps/manager/META-INF/context.xml
 ```
 
-- Comment out or remove this line: ``Add <!-- at begining and --> at the end to comment it out`
+- Comment out or remove this line: ``Add <!----> at begining and the end to comment it out`
 
 ```bash
 <Valve className="org.apache.catalina.valves.RemoteAddrValve"
@@ -434,7 +434,7 @@ http://localhost:8081
 
 ## 🔧 Step 4: Update Your Maven `pom.xml`
 
-- Ensure `war`, Java version to 17, and includes looks like below script:
+- Ensure `war`, Java version to 17, and looks like below script:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -519,7 +519,7 @@ Fill in:
 ![Build Success](images/image27.png)
 
 - WAR is deployed to Tomcat
-- Navigate to: `http://localhost:8080/text-reverser/` and test form
+- Navigate to: `http://localhost:8081/text-reverser/` and test form
 
 ![App Test Success](images/image24.png)
 
