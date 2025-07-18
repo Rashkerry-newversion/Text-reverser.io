@@ -169,7 +169,7 @@ sudo systemctl status jenkins    #To Check if Jenkins is Running. You should som
 
 - Jenkins runs on port 8080 by default. So open this in your browser:
 
-```html
+```bash
 http://localhost:8080
 ```
 
