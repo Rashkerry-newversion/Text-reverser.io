@@ -78,8 +78,6 @@ mkdir -p scripts src/main/java/app
 - Place `setup_day1.sh` inside `scripts/`
 - Copy and Paste file contents in this Repo into your files.
 
-![File Structure](Images/image1.png)
-
 ### 4. Make setup script executable
 
 - Make setup_day1 executable by runninig below command `setup_day1.sh is a bash file. this is to make automation of installations easier`
