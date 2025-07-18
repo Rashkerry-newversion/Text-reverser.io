@@ -60,7 +60,7 @@ text-reverser/
 ```bash
 mkdir text-reverser && cd text-reverser
 code .                                      #Move to VS Code
-``` 
+```
 
 ### 2. Create folders
 
@@ -265,10 +265,279 @@ sudo cat /var/lib/jenkins/secrets/initialAdminPassword
 
 ---
 
-## ✅ What’s Next (Day 3 Preview)
+## Day 7: Java WAR Deployment to Apache Tomcat Using Jenkins
 
-We’ll integrate **SonarQube** and start checking code quality before we deploy.
+Welcome to Day 7 of the Everyday DevOps series! Today we will:
+
+- Install Apache Tomcat (Using Bash Automation).
+- Deploy our Maven-built WAR file to Tomcat using Jenkins.
+- Troubleshoot common issues during deployment.
+
+**This guide walks you through installing Apache Tomcat 10.1.43 on your server (non-Docker), testing it, and integrating it with Jenkins to deploy a Java WAR file from your GitHub repo.**
+
+## ✅ Prerequisites
+
+Before you begin:
+
+- Jenkins should already be installed and running.
+- Your Java WAR project (like text-reverser) should be Maven-compatible.
+- Your Jenkins job should pull code from GitHub.
 
 ---
 
+## 📁 Project Structure
+
+```bash
+text-reverser/
+├── scripts/
+│   ├── setup_day1.sh
+│   ├── setup_day2.sh
+│   └── setup_day3.sh  <-- #Used for Tomcat Installation
+├── src/
+│   └── main/
+│       ├── java/
+│       │   └── app/
+│       │       └── TextReverser.java
+│       └── webapp/
+│           ├── index.jsp
+│           └── WEB-INF/
+│               └── web.xml
+├── pom.xml
+└── README.md
+```
+
+---
+
+## 🧰 Step 1: Run the Installer Script
+
+- We want to make this easier with bash automation so we first create a .sh file in the script folder.
+- Paste this script into a file called `setup_day3.sh` inside your `scripts/ folder`:
+- This script installs Tomcat and verifies it's working.
+
+```bash
+#!bin/bash
+# 1. Update System Packages
+sudo apt update && sudo apt upgrade -y
+
+# 2. Create tomcat user (skip if already exists)
+sudo useradd -m -U -d /opt/tomcat -s /bin/false tomcat
+
+# 3. Download Tomcat 10 (working version as of July 2025)
+cd /tmp
+wget https://archive.apache.org/dist/tomcat/tomcat-10/v10.1.24/bin/apache-tomcat-10.1.24.tar.gz
+
+# 4. Extract and move to /opt
+sudo mkdir -p /opt/tomcat
+sudo tar -xzvf apache-tomcat-10.1.24.tar.gz -C /opt/tomcat --strip-components=1
+
+# 5. Set Permissions
+sudo chown -R tomcat: /opt/tomcat
+sudo chmod +x /opt/tomcat/bin/*.sh
+
+# 6. Start Tomcat
+sudo /opt/tomcat/bin/startup.sh
+```
+
+![Tomcat Installation Script](images/image17.png)
+
+- Then run it:
+
+```bash
+cd scripts
+bash setup_day3.sh
+```
+
+![Bash Run Script](images/image18.png)
+
+## 🛠 Step 2: Configure Tomcat for Jenkins Deployment
+
+- Open the Tomcat users config file:
+
+```bash
+sudo nano /opt/tomcat/conf/tomcat-users.xml
+```
+
+- Add this block before the closing </tomcat-users> tag:
+
+```bash
+<role rolename="manager-script"/>
+<user username="jenkins" password="jenkinspassword" roles="manager-script"/>
+```
+
+- Save & exit (`CTRL+O`, `Enter`, then `CTRL+X`)
+
+![Tomcat User Configuration](images/image21.png)
+
+- **Note:** Replace `"jenkinspassword"` with a secure password. Do not delete the outer `<tomcat-users>` block.
+
+## 🔧 🌐 Step 3: Allow Tomcat Manager Access
+
+- By default, Tomcat restricts access to the Manager App. To fix that run:
+
+```bash
+sudo nano /opt/tomcat/webapps/manager/META-INF/context.xml
+```
+
+- Comment out or remove this line: ``Add <!-- at begining and --> at the end to comment it out`
+
+```bash
+<Valve className="org.apache.catalina.valves.RemoteAddrValve"
+       allow="127\.\d+\.\d+\.\d+|::1" />
+```
+
+- Save & exit.
+
+![Setting Manager App](images/image22.png)
+
+### Step-by-Step: Change Tomcat’s Port from 8080 to Another Port 8081
+
+Since Jenkins is running on port 8080, there would be a conflit between Jenkins and Tomcat due to its default port also being port 8080. So the best thing to do is to change it's port number
+
+- Make sure the new port you choose is not already in use on your system. Use sudo lsof -i :8081 to check.
+
+- Open the Tomcat server configuration file:
+
+```bash
+sudo nano /opt/tomcat/conf/server.xml
+```
+
+-Look for the connector that listens on port 8080. It looks like this:
+
+```bash
+<Connector port="8080" protocol="HTTP/1.1"
+           connectionTimeout="20000"
+           redirectPort="8443" />
+```
+
+- Change the port from 8080 to something else, like 8081:
+
+![Port Change](images/image19.png)
+
+- Save and exit:
+- Press CTRL+O → Enter to save
+- Press CTRL+X to exit
+- Restart Tomcat to apply the change:
+
+```bash
+sudo -u tomcat /opt/tomcat/bin/shutdown.sh
+sleep 5
+sudo -u tomcat /opt/tomcat/bin/startup.sh
+```
+
+- Test by opening your browser and visiting:
+
+```bash
+http://localhost:8081
+```
+
+- You should see the Tomcat homepage.
+
+## 🔧 Step 4: Update Your Maven `pom.xml`
+
+- Ensure `war`, Java version to 17, and includes looks like below script:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.devops</groupId>
+    <artifactId>text-reverser</artifactId>
+    <version>1.0</version>
+    <packaging>war</packaging>
+
+    <name>Text Reverser</name>
+
+    <build>
+        <finalName>text-reverser</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.10.1</version>
+                <configuration>
+                    <source>17</source>
+                    <target>17</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.4.0</version>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
+
+- Run `mvn clean package` to update `war` file.
+
+## 🚀 Step 5: Configure Jenkins Job to Deploy WAR to Tomcat
+
+**Note** make sure to install Deploy to container Plugin.
+
+To do that:
+
+- Go to Settings → Manage Jenkins → Plugins → Available Plugins
+- Search and Install `Deploy to container Plugin`
+- No need to restart Jenkins.
+
+### Now Configure Post Build Actions
+
+- Go to Jenkins → your freestyle job(TextReverser Buil) → Configure
+
+![Configure](images/image20.png)
+
+- Under Post-build Actions, click Add post-build action → select Deploy war/ear to a container
+
+Fill in:
+
+- WAR/EAR files: `**/target/*.war`
+- Context path: `/text-reverser`
+- Container: `Tomcat 9.x Remote`
+- Tomcat URL: `<http://localhost:8081>`
+- Credentials:
+   click on add → Jenkins
+   Kind : Username with password
+   Enter below details
+     Username: `jenkins` (tomcat username)
+     Password: `jenkinspassword` (tomcat Password)
+     then click add to finish
+- Click Save to finish and build the job.
+
+![Post Build Actions](images/image26.png)
+
+---
+
+## ✅ Success Check
+
+- Build ends with `BUILD SUCCESS`
+
+![Build Success](images/image27.png)
+
+- WAR is deployed to Tomcat
+- Navigate to: `http://localhost:8080/text-reverser/` and test form
+
+![App Test Success](images/image24.png)
+
+---
+
+## 📌 Final Tip
+
+Push all changes to GitHub before triggering Jenkins builds, as Jenkins pulls directly from your repo.
+
+## 🐞 Common Errors & Fixes
+
+| Error | Fix |
+|------|------|
+| **404 Downloading Tomcat** | Use archived versions (e.g. `10.1.24`) from [https://archive.apache.org/dist/tomcat/](https://archive.apache.org/dist/tomcat/) |
+| **TextReverser cannot be resolved** | Make sure class is in `src/main/java/app/TextReverser.java` and JSP has `<%@ page import="app.TextReverser" %>` |
+| **cargo.remote.username/password missing** | Set them in Jenkins deploy step OR use global credentials |
+| **Cannot access /opt/tomcat/bin/startup.sh** | Make sure Tomcat was extracted correctly and has exec permissions |
+| **JSP Compilation Error** | Check class path, rebuild WAR, and make sure Tomcat has access to compiled classes |
+
 📝 _This project is part of the #EverydayDevOps series._
+Happy automating! 🚀
