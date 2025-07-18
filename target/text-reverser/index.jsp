@@ -20,7 +20,7 @@
     <%
       String input = request.getParameter("text");
       if (input != null && !input.trim().isEmpty()) {
-        String reversed = TextReverser.reverse(input);
+        String reversed = TextReverser.reverse(input); // ✅ fixed here
     %>
         <p><strong>Reversed Text:</strong> <%= reversed %></p>
     <%
@@ -28,4 +28,6 @@
     %>
   </div>
 </body>
+</html>
+
 </html>
