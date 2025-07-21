@@ -539,5 +539,168 @@ Push all changes to GitHub before triggering Jenkins builds, as Jenkins pulls di
 | **Cannot access /opt/tomcat/bin/startup.sh** | Make sure Tomcat was extracted correctly and has exec permissions |
 | **JSP Compilation Error** | Check class path, rebuild WAR, and make sure Tomcat has access to compiled classes |
 
+---
+
+## 📘 Day 4: SonarQube Setup & Jenkins Integration
+
+This guide walks you through installing **SonarQube** on your system and integrating it into your Jenkins pipeline to enable static code analysis for your Java WAR application.
+
+---
+
+## 🛠️ Step 1: Install SonarQube using Bash Script(setup_day4.sh)
+
+- Create a new script for sonarqube setup.
+
+> Script: `scripts/setup_day4.sh`
+
+![SonarQube Setup](images/image28.png)
+
+### 🔧 What the script does:
+
+- Installs Java 17 (if missing)
+- Creates a system user for SonarQube
+- Downloads and extracts SonarQube 10.4
+- Starts SonarQube manually
+
+- Run the script in your terminal:
+
+```bash
+bash scripts/setup_day4.sh
+```
+
+![Running bash Script](images/image29.png)
+
+Once completed, visit [http://localhost:9000](http://localhost:9000) in your browser.
+
+![SonarQube in Browser](images/image30.png)
+
+---
+
+## 🔑 Step 2: Set Up SonarQube
+
+1. Go to [http://localhost:9000](http://localhost:9000)
+2. Login with:
+   - **Username:** `admin`
+   - **Password:** `admin`
+3. Set a new password
+
+![After Logging In](images/image31.png)
+4. Go to **My Account > Security**
+5. Generate a **token** (e.g., `jenkins-sonar-token`)
+6. Token type **User token**
+7. Copy the token for Jenkins use
+
+![Token Generation](images/image32.png)
+
+---
+
+## 🔗 Step 3: Configure Jenkins for SonarQube
+
+### 🔌 Step 1: Install "SonarQube Scanner for Jenkins" Plugin
+
+- Go to Jenkins Dashboard
+- Click "Manage Jenkins"
+- Click "Plugins" (or "Manage Plugins")
+- Go to the Available tab
+- Search for:
+    SonarQube Scanner for Jenkins
+     Check the box and click Install without restart
+- Wait for it to complete
+
+### Step 2: Add the Token as a "Secret text" Credential in Jenkins
+
+- This is where you need to make sure you select the correct "Kind".
+- Go to your Jenkins Dashboard.
+- Click Manage Jenkins.
+- Click Manage Credentials (under "Security").
+- In the "Stores scoped to Jenkins" section, click on Jenkins.
+- Click on Global credentials (unrestricted).
+- Click Add Credentials on the left sidebar.
+    Crucially, for "Kind", select `Secret text`.
+    **Scope**: Leave as Global.
+    **Secret**: PASTE THE `SONARQUBE AUTHENTICATION TOKEN` YOU COPIED IN STEP 1 HERE.
+    **ID**: Give it a meaningful ID (e.g., sonarqube-api-token). This is the name that will appear in the dropdown.
+    **Description**: (Optional) Add a description like "SonarQube token for Jenkins integration".
+- Click Create.
+
+![SonarQube Credential creation](images/image35.png)
+
+### ✅ Next Step: Add SonarQube Server
+
+
+- 🔧 Go to:
+    Manage Jenkins → System
+    Scroll down until you see:
+    “SonarQube Servers”
+- In that section: Scroll down
+    Click “Add SonarQube”
+    **Set Name**: SonarQube
+    **Set Server URL**: <http://localhost:9000>
+    **Set Authentication Token**: Choose the one created from before
+    Then click save
+
+![Sonar Server](images/image33.png)
+![Sonar Server](images/image34.png)
+“SonarQube servers”
+
+---
+
+## Set up a Jenkins Job to Run a SonarQube Analysis
+
+- You'll need a Jenkins job that checks out your code and then executes the SonarQube Scanner against it.
+
+## 🔨 Step-by-Step: Add SonarQube Analysis to Freestyle Project
+
+### Step 1: Open Your Jenkins Freestyle Project
+
+- Go to your Jenkins dashboard
+- Click your project (e.g. `TextReverser`)
+- Click `Configure`
+
+### Step 2: Add SonarQube Scanner to Build Step
+
+Under Build, do the following:
+
+- Click Add build step
+- Choose `Execute SonarQube Scanner`
+
+![Add Build Step](images/image36.png)
+
+### Step 3: Configure the SonarQube Scanner Step
+
+You’ll see a form with these fields:
+
+- Task to run → Leave blank (uses default)
+- Analysis Properties → Paste something like this:
+
+```bash
+sonar.projectKey=text-reverser
+sonar.projectName=Text Reverser
+sonar.projectVersion=1.0
+sonar.sources=src
+sonar.java.binaries=target/classes
+sonar.language=java
+```
+
+📌 Make sure src and target/classes paths match your Java project structure.
+
+![Configure the SonarQube Scanner Step](images/image37.png)
+
+1. sonar.projectKey: A unique identifier for your project in SonarQube (e.g., com.mycompany.myproject). Keep it simple, no spaces.
+2. sonar.projectName: The display name of your project in SonarQube.
+3. sonar.projectVersion: The version of your project.
+4. sonar.sources=.: Tells the scanner to analyze all source files in the current directory (where Jenkins checks out your code). Adjust this if your source code is in a subdirectory (e.g., sonar.sources=src/main/java).
+
+(Leave other settings as default for now).
+
+### Step 4: Save and Build
+
+- Click Save
+- Then click Build Now
+
+![Build Success](images/image41.png)
+![Sonar Project Page](images/images40.png)
+![Sonar Page Analysis](images/image39.png)
+
 📝 _This project is part of the #EverydayDevOps series._
 Happy automating! 🚀
