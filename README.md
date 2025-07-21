@@ -4,7 +4,7 @@
 - Text Reverser CI/CD Pipeline. This project is part of the #EverydayDevOps series, a hands-on journey to build a complete CI/CD pipeline step-by-step using real-world tools and concepts.
 - The application itself is simple: a Java-based Text Reverser that takes in a line of text and outputs the reversed version. While the app logic is basic, the goal is not the complexity of the code, but to simulate a full pipeline like those used in production software delivery.
 
-## This gives us the perfect playground to:
+## This gives us the perfect playground to
 
 - Build and test a Java app using Maven
 - Automate tasks with Jenkins
@@ -553,7 +553,7 @@ This guide walks you through installing **SonarQube** on your system and integra
 
 ![SonarQube Setup](images/image28.png)
 
-### 🔧 What the script does:
+### 🔧 What the script does
 
 - Installs Java 17 (if missing)
 - Creates a system user for SonarQube
@@ -624,7 +624,6 @@ Once completed, visit [http://localhost:9000](http://localhost:9000) in your bro
 ![SonarQube Credential creation](images/image35.png)
 
 ### ✅ Next Step: Add SonarQube Server
-
 
 - 🔧 Go to:
     Manage Jenkins → System
