@@ -779,7 +779,7 @@ http://localhost:9002
 
 ![Nexus New Password](images/image45.png)
 
-## 🧰Step 2: Create a New Maven Repository
+## 🧰Step 2: Create a New Maven Repository(Optional)
 
 Go to:
 “Repositories” > “Create repository” > choose maven2 (hosted)
@@ -862,7 +862,7 @@ Copy this, you'll use it in your Jenkins pom.xml and/or Maven settings.
 
 ## 🛠️Step 5: Configure Maven Credentials in Jenkins
 
--Go to Jenkins → Manage Jenkins > Credentials > Global > Add Credentials
+- Go to Jenkins → Manage Jenkins > Credentials > Global > Add Credentials
 
 1. Kind: Username with password
 
@@ -876,7 +876,7 @@ Copy this, you'll use it in your Jenkins pom.xml and/or Maven settings.
 
 ## 📦Step 6: Update Your pom.xml
 
-Add the distributionManagement section:
+- Add the distributionManagement section:
 
 ```bash
 <distributionManagement>
@@ -886,6 +886,8 @@ Add the distributionManagement section:
   </repository>
 </distributionManagement>
 ```
+
+![Pom.xml Update](images/image54.png)
 
 ## ✅ Step 7: Enable Maven Build in Jenkins
 
@@ -936,14 +938,112 @@ clean deploy
 ![Add Maven Targets](images/image52.png)
 
 - Advanced > Settings
-- Choose Maven installation and add:
+- Choose Maven installation and add below to properties tab:
 
 ```bash
 -Dmaven.test.skip=true
 ```
 
-✅ Done!
-Jenkins will now build your Java WAR file and deploy to Nexus automatically after successful builds.
+![Advance settings](images/image55.png)
+
+- Save
+
+### Step 9: Place settings.xml manually in Jenkins' Maven home
+
+### 🔧 Step-by-Step
+
+- Create a directory for Maven settings (if it doesn’t exist):
+
+```bash
+sudo mkdir -p /var/lib/jenkins/.m2
+```
+
+- Create or edit the settings.xml file:
+
+```bash
+sudo nano /var/lib/jenkins/.m2/settings.xml
+```
+
+- Paste the following content (update with your actual Nexus credentials):
+
+```bash
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
+                              https://maven.apache.org/xsd/settings-1.0.0.xsd">
+  <servers>
+    <server>
+      <id>maven-releases</id>
+      <username>your-nexus-username</username>
+      <password>your-nexus-password</password>
+    </server>
+  </servers>
+</settings>
+```
+
+![Settings.xml](images/image53.png)
+
+- Make sure Jenkins has read permissions:(make sure to use jenkins user you created)
+
+```bash
+sudo chown -R jenkins:jenkins /var/lib/jenkins/.m2
+```
+
+- Restart Jenkins to be safe:
+
+```bash
+sudo systemctl restart jenkins
+```
+
+- Go back to Jenkins GUI, then Build project
+
+### Check the Jenkins Console Output
+
+- After your Jenkins build finishes, always check the console output for the Maven deploy goal.
+
+- Go to your Jenkins Dashboard.
+
+- Click on your TextReverser Build job.
+
+- Click on the latest build number (e.g., #15).
+
+- Click "Console Output" on the left sidebar.
+
+- Scroll through the logs and look for the section where Maven's deploy plugin runs.
+
+**What to look for:**
+
+`[INFO] BUILD SUCCESS.`
+
+![Build Success](images/console-output-success.png)
+
+### Browse Nexus Repository Manager UI
+
+- This is the most reliable way to visually confirm your artifact is there.
+
+- Navigate to your Nexus Repository Manager instance: `<http://localhost:9002>`.
+
+- Log in with your Nexus admin credentials.
+
+- In the left-hand navigation pane, click on `"Browse"` under `"Repositories"`.
+
+- You will see a list of your repositories.
+
+- Click on maven-releases. AND/OR Click on maven-snapshots if your pom.xml's version ends with -SNAPSHOT (e.g., 1.0-SNAPSHOT). `i.e. if it was added in the pom.xml file.
+
+- Navigate through the folder structure that matches your groupId and artifactId:
+
+    1. You should see: `com/`
+
+    2. Then: `com/devops/`
+
+    3. Then `com/devops/text-reverser/`
+
+    4. Inside `text-reverser/`, you should see a folder for your `project's version` (e.g., 1.0/ or 1.0-SNAPSHOT/).
+
+    5. Click into the version folder. You should see your text-reverser-1.0.war file (and its .pom file, .md5, .sha1 checksums) listed there.
+
+![Nexus Output](images/nexus-success.png)
 
 📝 _This project is part of the #EverydayDevOps series._
 Happy automating! 🚀
