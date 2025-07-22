@@ -31,9 +31,8 @@
             </plugin>
         </plugins>
     </build>
-</project>
 
-<distributionManagement>
+    <distributionManagement>
     <repository>
         <id>maven-releases</id>
         <name>Nexus Release Repository</name>
@@ -45,3 +44,5 @@
         <url>http://localhost:9002/repository/maven-snapshots/</url>
     </snapshotRepository>
 </distributionManagement>
+</project>
+
