@@ -932,6 +932,7 @@ Goals:
 ```bash
 clean deploy
 ```
+http://localhost:9002/repository/maven-snapshots/
 
 ![Add Maven Targets](images/image52.png)
 
