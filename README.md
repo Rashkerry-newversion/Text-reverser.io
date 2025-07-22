@@ -699,5 +699,251 @@ sonar.language=java
 ![Sonar Project Page](images/images40.png)
 ![Sonar Page Analysis](images/image39.png)
 
+
+# 📦 Day 5: Nexus Repository Manager Setup & Jenkins Integration
+
+Welcome to Day 5 of my Everyday DevOps journey! Today, we’re setting up **Sonatype Nexus Repository Manager** on a Linux system, and integrating it into Jenkins to publish our Java WAR builds.
+
+---
+
+## 🧰 What You’ll Achieve
+
+- ✅ Install Nexus 3 (Community Edition) manually
+- ✅ Set it up to auto-start using `systemd`
+- ✅ Access Nexus through the browser
+- ✅ Configure a Maven Hosted Repository
+- ✅ Connect Jenkins to Nexus and deploy WAR files automatically
+
+---
+
+## 📜 Prerequisites
+
+- Ubuntu/Debian server with sudo access  
+- Jenkins already installed and working (see Day 1–3)
+- Java 8+ installed
+
+---
+
+## 🖥️ Step 1: Bash Script – Nexus Installation (Non-Docker)
+
+- Save this as `scripts/setup_day5.sh` in your project folder and run:
+
+![setup_day5.sh](images/image43.png)
+
+```bash
+cd scripts
+bash setup_day5.sh
+```
+
+- If you are having issues with nexus running. Run the following commands to troubleshoot:
+
+```bash
+sudo useradd -r -s /bin/false nexus     # Create a system user named 'nexus' without a home directory and no login shell
+
+#  Change ownership of the Nexus installation directory
+sudo chown -R nexus:nexus /opt/nexus          # Replace /opt/nexus with your actual Nexus installation path
+
+#  Create the sonatype-work directory if it doesn't exist,
+sudo mkdir -p /opt/sonatype-work
+sudo chown -R nexus:nexus /opt/sonatype-work    # and set its ownership to the nexus user.
+
+#  Set appropriate permissions for the sonatype-work directory
+sudo chmod -R 755 /opt/sonatype-work    # The '755' allows the 'nexus' user to read/write/execute, and others to read/execute.
+
+sudo systemctl daemon-reload   #reload systemd
+sudo systemctl start nexus.service   #start nexus service
+
+#Check the Status and Logs again
+sudo systemctl status nexus.service
+sudo journalctl -u nexus.service -n 50
+```
+
+- Connect to nexus via:
+
+```bash
+http://localhost:9002
+```
+
+- You should be directed to nexus home page
+
+![Nexus Homepage](images/image42.png)
+
+- Sign into nexus with:
+    Username: admin
+    password: Run `cat /opt/sonatype-work/nexus3/admin.password` in your terminal.
+             copy and paste output as the password
+
+![Nexus Admin Sign in](images/image44.png)
+
+- You'll be prompted to create a new password
+
+![Nexus New Password](images/image45.png)
+
+## 🧰Step 2: Create a New Maven Repository
+
+Go to:
+“Repositories” > “Create repository” > choose maven2 (hosted)
+
+![New Nexus Repository](images/image46.png)
+
+**Fill the form as:**
+
+Field:
+
+- Name: `maven-releases`
+
+- Online: `Yes`
+
+- Version policy: `Release`
+
+- Write policy: `Allow redeploy` (for now)
+
+- Deployment: `Enable via Nexus UI or REST`
+
+![New Repository](images/image49.png)
+
+## 👤Step 3: Create a Deployment User (for Jenkins)
+
+Create a New User for Jenkins`(on Nexus)`:
+
+- In the Nexus UI, click the gear icon (Administration) in the top menu.
+
+- In the left-hand navigation, go to Security > Users.
+
+- Click the "Create user" button.
+
+**Fill in the details:**
+
+1. ID: jenkins-deployer (or similar descriptive name)
+
+2. First Name: Jenkins
+
+3. Last Name: Deployer
+
+4. Email: (optional, can be a dummy email like jenkins@example.com)
+
+5. Password: Choose a strong password and remember it. (e.g., jenkinsStrongPass123!)
+
+6. Status: Active
+
+7. Click "Create user".
+
+**Assign Roles to the New User:**
+
+- While still on the "Edit user" page for jenkins-deployer, scroll down to the "Roles" section.
+
+- For a typical Maven deployment, you'll need roles that allow pushing artifacts to hosted repositories.
+
+**Add these roles:**
+
+- nx-anonymous (Allows basic read access, generally a good baseline)
+
+- nx-developer (Provides privileges for creating and updating components/artifacts)
+
+`Alternatively (for simplicity in a development/challenge environment): You can assign nx-admin. This gives full administrative access, but is less secure for production. For this challenge, nx-admin is often easiest if nx-developer proves insufficient for some reason.`
+
+- Click "Add role" for each.
+
+- Click "Save" at the bottom of the user configuration.
+
+![Create new User](images/image48.png)
+
+## 🔗Step 4: Get Nexus Repository URL
+
+- It will look like:
+
+```bash
+http://<your-server>:9002/repository/maven-releases/
+```
+
+![Repository URL](images/image50.png)
+
+Copy this, you'll use it in your Jenkins pom.xml and/or Maven settings.
+
+## 🛠️Step 5: Configure Maven Credentials in Jenkins
+
+-Go to Jenkins → Manage Jenkins > Credentials > Global > Add Credentials
+
+1. Kind: Username with password
+
+2. Username: jenkins (or whatever you created)
+
+3. Password: Your password
+
+4. ID: nexus-credentials
+
+5. Description: Nexus deploy user
+
+## 📦Step 6: Update Your pom.xml
+
+Add the distributionManagement section:
+
+```bash
+<distributionManagement>
+  <repository>
+    <id>nexus</id>
+    <url>http://localhost:9002/repository/maven-releases/</url>  # Replace with your Nexus repository URL
+  </repository>
+</distributionManagement>
+```
+
+## ✅ Step 7: Enable Maven Build in Jenkins
+
+### 🔧 Step 1: Install Maven Integration Plugin
+
+- Go to Jenkins Dashboard → Manage Jenkins
+
+- Click on “Manage Plugins”
+
+- Go to the Available tab
+
+- Search for: `Maven Integration`
+
+- Check the box next to it
+
+- Click `Install` (without restart)
+
+### 🏗 Step 2: Configure Maven in Jenkins
+
+- Go to Manage Jenkins → Global → Tool Configuration
+
+- Scroll to Maven section
+
+- Click Add Maven
+
+    1. Name: Maven3 (or any name you’ll reference later)
+
+    2. Check Install automatically
+
+    3. Choose version e.g. 3.9.6 or any available stable
+
+![Add Maven Installation](images/image51.png)
+
+## ⚙️Step 8: Update Jenkins Job for Maven Deploy
+
+-In Jenkins, go to your freestyle project
+
+- Add build step:
+
+`Invoke top-level Maven targets`
+
+Goals:
+
+```bash
+clean deploy
+```
+
+![Add Maven Targets](images/image52.png)
+
+- Advanced > Settings
+- Choose Maven installation and add:
+
+```bash
+-Dmaven.test.skip=true
+```
+
+✅ Done!
+Jenkins will now build your Java WAR file and deploy to Nexus automatically after successful builds.
+
 📝 _This project is part of the #EverydayDevOps series._
 Happy automating! 🚀

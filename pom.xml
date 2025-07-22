@@ -32,3 +32,10 @@
         </plugins>
     </build>
 </project>
+
+<distributionManagement>
+  <repository>
+    <id>nexus</id>
+    <url>http://localhost:9002/repository/text-reverser.maven-releases/</url> 
+  </repository>
+</distributionManagement>
