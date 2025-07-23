@@ -699,14 +699,15 @@ sonar.language=java
 ![Sonar Project Page](images/images40.png)
 ![Sonar Page Analysis](images/image39.png)
 
+---
 
-# 📦 Day 5: Nexus Repository Manager Setup & Jenkins Integration
+## 📦 Day 5: Nexus Repository Manager Setup & Jenkins Integration
 
 Welcome to Day 5 of my Everyday DevOps journey! Today, we’re setting up **Sonatype Nexus Repository Manager** on a Linux system, and integrating it into Jenkins to publish our Java WAR builds.
 
 ---
 
-## 🧰 What You’ll Achieve
+### 🧰 What You’ll Achieve
 
 - ✅ Install Nexus 3 (Community Edition) manually
 - ✅ Set it up to auto-start using `systemd`
@@ -716,7 +717,7 @@ Welcome to Day 5 of my Everyday DevOps journey! Today, we’re setting up **Sona
 
 ---
 
-## 📜 Prerequisites
+### 📜 Prerequisites
 
 - Ubuntu/Debian server with sudo access  
 - Jenkins already installed and working (see Day 1–3)
@@ -724,7 +725,7 @@ Welcome to Day 5 of my Everyday DevOps journey! Today, we’re setting up **Sona
 
 ---
 
-## 🖥️ Step 1: Bash Script – Nexus Installation (Non-Docker)
+### 🖥️ Step 1: Bash Script – Nexus Installation (Non-Docker)
 
 - Save this as `scripts/setup_day5.sh` in your project folder and run:
 
@@ -779,7 +780,7 @@ http://localhost:9002
 
 ![Nexus New Password](images/image45.png)
 
-## 🧰Step 2: Create a New Maven Repository(Optional)
+### 🧰Step 2: Create a New Maven Repository(Optional)
 
 Go to:
 “Repositories” > “Create repository” > choose maven2 (hosted)
@@ -802,7 +803,7 @@ Field:
 
 ![New Repository](images/image49.png)
 
-## 👤Step 3: Create a Deployment User (for Jenkins)
+### 👤Step 3: Create a Deployment User (for Jenkins)
 
 Create a New User for Jenkins`(on Nexus)`:
 
@@ -848,7 +849,7 @@ Create a New User for Jenkins`(on Nexus)`:
 
 ![Create new User](images/image48.png)
 
-## 🔗Step 4: Get Nexus Repository URL
+### 🔗Step 4: Get Nexus Repository URL
 
 - It will look like:
 
@@ -860,7 +861,7 @@ http://<your-server>:9002/repository/maven-releases/
 
 Copy this, you'll use it in your Jenkins pom.xml and/or Maven settings.
 
-## 🛠️Step 5: Configure Maven Credentials in Jenkins
+### 🛠️Step 5: Configure Maven Credentials in Jenkins
 
 - Go to Jenkins → Manage Jenkins > Credentials > Global > Add Credentials
 
@@ -874,7 +875,7 @@ Copy this, you'll use it in your Jenkins pom.xml and/or Maven settings.
 
 5. Description: Nexus deploy user
 
-## 📦Step 6: Update Your pom.xml
+### 📦Step 6: Update Your pom.xml
 
 - Add the distributionManagement section:
 
@@ -889,9 +890,9 @@ Copy this, you'll use it in your Jenkins pom.xml and/or Maven settings.
 
 ![Pom.xml Update](images/image54.png)
 
-## ✅ Step 7: Enable Maven Build in Jenkins
+### ✅ Step 7: Enable Maven Build in Jenkins
 
-### 🔧 Step 1: Install Maven Integration Plugin
+#### 🔧 Step 1: Install Maven Integration Plugin
 
 - Go to Jenkins Dashboard → Manage Jenkins
 
@@ -905,7 +906,7 @@ Copy this, you'll use it in your Jenkins pom.xml and/or Maven settings.
 
 - Click `Install` (without restart)
 
-### 🏗 Step 2: Configure Maven in Jenkins
+#### 🏗 Step 2: Configure Maven in Jenkins
 
 - Go to Manage Jenkins → Global → Tool Configuration
 
@@ -921,7 +922,7 @@ Copy this, you'll use it in your Jenkins pom.xml and/or Maven settings.
 
 ![Add Maven Installation](images/image51.png)
 
-## ⚙️Step 8: Update Jenkins Job for Maven Deploy
+#### ⚙️Step 8: Update Jenkins Job for Maven Deploy
 
 -In Jenkins, go to your freestyle project
 
@@ -948,9 +949,9 @@ clean deploy
 
 - Save
 
-### Step 9: Place settings.xml manually in Jenkins' Maven home
+#### Step 9: Place settings.xml manually in Jenkins' Maven home
 
-### 🔧 Step-by-Step
+##### 🔧 Step-by-Step
 
 - Create a directory for Maven settings (if it doesn’t exist):
 
@@ -997,7 +998,7 @@ sudo systemctl restart jenkins
 
 - Go back to Jenkins GUI, then Build project
 
-### Check the Jenkins Console Output
+##### Check the Jenkins Console Output
 
 - After your Jenkins build finishes, always check the console output for the Maven deploy goal.
 
@@ -1017,7 +1018,7 @@ sudo systemctl restart jenkins
 
 ![Build Success](images/console-output-success.png)
 
-### Browse Nexus Repository Manager UI
+##### Browse Nexus Repository Manager UI
 
 - This is the most reliable way to visually confirm your artifact is there.
 
@@ -1045,7 +1046,7 @@ sudo systemctl restart jenkins
 
 ![Nexus Output](images/nexus-success.png)
 
-## Note
+##### Note
 
 **By default, Nexus "Release" repositories are configured to be immutable. This means once an artifact (like text-reverser-1.0.war) is deployed to a release repository, you cannot overwrite it. This is a best practice to ensure the integrity and traceability of your released software versions.**
 
@@ -1119,9 +1120,11 @@ sudo systemctl restart jenkins
 
 6. Trigger a new build in Jenkins.
 
+![Snapshot Folder](images/image64.png)
+
 **Maven will then automatically deploy to the snapshot Repository URL defined in your pom.xml because the version ends with -SNAPSHOT. This is ideal for continuous integration builds during development.**
 
-### Which option should you choose?
+#### Which option should you choose?
 
 - If 1.0 was truly a "final" release and you're now working on the next version, go with `Option 1 (1.1 or 1.0.1)`.
 
@@ -1149,11 +1152,110 @@ This guide walks you through the process of integrating **SonarQube Quality Gate
   - Configured the **SonarQube token** under Jenkins credentials
   - Installed the **"Sonar Quality Gates Plugin"** in Jenkins
 
+### Goal
+
+Configure SonarQube Quality Gates to define code quality standards and make Jenkins fail the build if these standards are not met.
+
 ---
 
-## 🧩 Step-by-Step Integration
+### 🧩 Step-by-Step Integration
 
-### 📦 Step 1: Install Quality Gates Plugin
+#### Part 1: Configure Quality Gate in SonarQube UI
+
+- First, you need to define the rules that your code must pass.
+
+- Log in to SonarQube:
+
+- Open your browser and go to <http://localhost:9000>.
+
+- Log in with your `admin credentials (or a user with "Administer Quality Gates" permissions)`.
+
+- In the top navigation bar, click on "Quality Gates".
+
+- Create a New Quality Gate (or use an existing one):
+
+**You can use the default "Sonar Way" Quality Gate, but it's good practice to create a custom one for your project.**
+
+- Click "Create" (top right).
+
+![Quality Gates](images/image65.png)
+
+- Name: Give it a meaningful name, e.g., `Text Reverser Quality Gate`.
+
+- Click `"Create"`.
+
+![Quality Gate Create](images/image66.png)
+
+- Define Quality Gate Conditions:
+
+- Once created, click `Unlock Editing` to configure it.
+
+- Click `"Add Condition"`.
+
+**Crucial: Quality Gate conditions are typically set on "on New Code". This means they apply only to code that has been changed or added since the last analysis, preventing old issues from blocking new development.**
+
+- Add conditions that make sense for your project. Here are some common and recommended ones:
+
+     **Condition 1 (New Bugs):**
+
+     Metric: Bugs
+
+     On: on New Code
+
+     Is greater than: 0 (This means zero new bugs are allowed). Change to reflect the kind of 
+
+    **Condition 2 (New Vulnerabilities):**
+
+    Metric: Vulnerabilities
+
+    On: on New Code
+
+    Is greater than: 0 (No new vulnerabilities allowed)
+
+    **Condition 3 (New Code Smells):**
+
+    Metric: Code Smells
+
+    On: on New Code
+
+    Is greater than: 0 (No new code smells allowed)
+
+    **Condition 4 (New Coverage - for Java projects with tests):**
+
+    Metric: Coverage
+
+    On: on New Code
+
+    Is less than: 80.0% (Example: New code coverage should not drop below 80%)
+
+    **Condition 5 (New Duplicated Lines):**
+
+    Metric: Duplicated Lines (%)
+
+    On: on New Code
+
+    Is greater than: 3.0% (Example: New code should not introduce more than 3% duplication)
+
+- Click "Add Condition" after setting each one.
+
+![Add Condition](images/image67.png)
+
+- Set Your Quality Gate as Default (Optional, but convenient):
+
+- Go back to the main "Quality Gates" page.
+
+- Find your Text Reverser Quality Gate.
+
+- Click the "Set as Default" button next to it.
+
+![Set as Default](images/image68.png)
+
+**Alternatively, Assign to Project: If you don't set it as default, you need to explicitly assign it to your Text Reverser project. Go to Projects in SonarQube, click on your Text Reverser project, then go to Project Settings > Quality Gate and select your custom gate. You can also add permission below on who can manage it.**
+
+![Assign to Project](images/image69.png)
+
+#### 📦 Part 2: Install Quality Gates Plugin
+
 
 1. Go to Jenkins dashboard → `Manage Jenkins` → `Manage Plugins`
 
@@ -1165,7 +1267,7 @@ This guide walks you through the process of integrating **SonarQube Quality Gate
 
 ---
 
-### 🔐 Step 2: Verify SonarQube Server & Token
+#### 🔐 Part 3: Verify SonarQube Server & Token
 
 1. Go to `Manage Jenkins` → `Configure System`
 
@@ -1181,7 +1283,7 @@ This guide walks you through the process of integrating **SonarQube Quality Gate
 
 ---
 
-### 🛠️ Step 3: Configure Jenkins Job
+#### 🛠️ Part 4: Configure Jenkins Job
 
 1. Open your Jenkins **Freestyle Project**
 
@@ -1201,7 +1303,7 @@ This guide walks you through the process of integrating **SonarQube Quality Gate
 
 ---
 
-## ✅ Final Setup Checklist
+#### ✅ Final Setup Checklist
 
 | Item                                 | Status        |
 |--------------------------------------|---------------|
@@ -1222,17 +1324,7 @@ Once everything is configured:
 - If it **fails**, the build will be marked as **FAILED**.
 - If it **passes**, the build will continue.
 
----
-
-## 📸 (Optional) Markdown Image References
-
-Include these if you're building a README with images:
-
-```markdown
-![Install Quality Gate Plugin](images/install_quality_gate_plugin.png)
-![Add Post Build Action](images/add_quality_gate_action.png)
-![Configure Quality Gate Step](images/configure_quality_gate.png)
-```
+![Configure Quality Gate Step](images/quality-gates-passed.png)
 
 ---
 
@@ -1246,10 +1338,22 @@ Include these if you're building a README with images:
 
 ---
 
-## 📍 References
+## ✅ Final Project Checklist
 
-- [SonarQube Docs](https://docs.sonarsource.com/)
-- [Quality Gates Plugin](https://plugins.jenkins.io/quality-gates/)
+| Item                                                   | Status          |
+|--------------------------------------------------------|-----------------|
+| SonarQube running on `localhost:9000`                  | ✅             |
+| Jenkins server running `localhost:8000`                | ✅             |
+| Tomcat deploy App on `localhost:8081`                  | ✅             |
+| Nexus Artifact Repository configure on `localhost:9002`| ✅             |
+| SonarQube Quality Gates Configured                     | ✅             |
+| All Project Files pushed to GitHub                     | ✅             |
+
+![SonarQube](images/SonarQube.png)
+![Jenkins](images/Jenkins.png)
+![Nexus](images/Nexus.png)
+![Quality Gates](images/Quality-gates.png)
+![GitHub](images/GitHub.png)
 
 📝 _This project is part of the #EverydayDevOps series._
 Happy automating! 🚀
