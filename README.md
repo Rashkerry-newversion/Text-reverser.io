@@ -1045,5 +1045,171 @@ sudo systemctl restart jenkins
 
 ![Nexus Output](images/nexus-success.png)
 
+## Note
+
+**By default, Nexus "Release" repositories are configured to be immutable. This means once an artifact (like text-reverser-1.0.war) is deployed to a release repository, you cannot overwrite it. This is a best practice to ensure the integrity and traceability of your released software versions.**
+
+- This means that your build would fail over and over again until the version of your code is updated.
+
+### How to Fix It:
+
+- You have two main options, depending on your goal:
+
+**`Option 1 (Recommended for Releases): Change Your Project Version in pom.xml`**
+
+- This is the standard practice for releases. Each time you deploy a new "release" version, you should increment the version number.
+
+1. Open your pom.xml file.
+
+2. Find the `version` tag in your pom.xml:
+
+    ```bash
+    <version>1.0</version>
+    ```
+
+    ![Version Tag](images/image59.png)
+
+3. Change it to a new, unique version number. For example:
+
+    ```bash
+    <version>1.1</version>
+    ```
+
+4. Or, if you're making a minor fix to the existing 1.0 release:
+
+    ```bash
+    <version>1.0.1</version>
+    ```
+
+    ![Version Change](images/image60.png)
+
+5. Save your pom.xml.
+
+6. Commit and push this change to your GitHub repository.
+
+7. Trigger a new build in Jenkins.
+
+8. This is the proper way to handle releases. Each deployment to maven-releases should have a unique version.
+
+---
+
+## Day 6: ✅ SonarQube Quality Gates Integration (Jenkins + Existing Token)
+
+This guide walks you through the process of integrating **SonarQube Quality Gates** with Jenkins for your CI/CD pipeline.
+
+---
+
+### 🔧 Prerequisites
+
+- Jenkins is installed and running
+- SonarQube is installed and accessible at: `http://localhost:9000`
+- You already:
+  - Installed the **SonarQube Scanner plugin** in Jenkins
+  - Added **SonarQube server** in Jenkins settings
+  - Configured the **SonarQube token** under Jenkins credentials
+  - Installed the **"Sonar Quality Gates Plugin"** in Jenkins
+
+---
+
+## 🧩 Step-by-Step Integration
+
+### 📦 Step 1: Install Quality Gates Plugin
+
+1. Go to Jenkins dashboard → `Manage Jenkins` → `Manage Plugins`
+
+2. Under the **Available** tab, search for:
+
+   `Sonar Quality Gates Plugin`
+
+3. Install it and **restart Jenkins** if prompted.
+
+---
+
+### 🔐 Step 2: Verify SonarQube Server & Token
+
+1. Go to `Manage Jenkins` → `Configure System`
+
+2. Scroll to **SonarQube Servers**
+
+   - Verify:
+
+     - Server URL: `http://localhost:9000`
+
+     - Credentials: Your existing token (added under **Add → Secret text**)
+
+![SonarQube Server Verification](images/image56.png)
+
+---
+
+### 🛠️ Step 3: Configure Jenkins Job
+
+1. Open your Jenkins **Freestyle Project**
+
+2. Go to `Configure` → Scroll to **Post-build Actions**
+
+3. Click `Add post-build action` → Choose:  `Sonar Quality Gates`
+
+   ![Quality Gates Post Build Actions](images/image57.png)
+
+4. Choose:
+
+    **SonarQube Installation**: Should auto-select if you configured earlier
+
+    **Project Key**: Your project key from SonarQube (same as in your `pom.xml`)
+
+    **Wait for Quality Gate**: ✅ Check this to enforce pass/fail condition
+
+---
+
+## ✅ Final Setup Checklist
+
+| Item                                 | Status        |
+|--------------------------------------|---------------|
+| SonarQube running on `localhost:9000`| ✅             |
+| Jenkins server running               | ✅             |
+| Sonar Scanner installed in Jenkins   | ✅             |
+| SonarQube token added in Jenkins     | ✅             |
+| Quality Gates plugin installed       | ✅             |
+| Post-build action added              | ✅             |
+
+---
+
+## 💡 Result
+
+Once everything is configured:
+
+- Your Jenkins build will **pause and wait** for SonarQube's Quality Gate result.
+- If it **fails**, the build will be marked as **FAILED**.
+- If it **passes**, the build will continue.
+
+---
+
+## 📸 (Optional) Markdown Image References
+
+Include these if you're building a README with images:
+
+```markdown
+![Install Quality Gate Plugin](images/install_quality_gate_plugin.png)
+![Add Post Build Action](images/add_quality_gate_action.png)
+![Configure Quality Gate Step](images/configure_quality_gate.png)
+```
+
+---
+
+## 🤔 Common Issues
+
+| Problem                          | Fix                                                                 |
+|----------------------------------|----------------------------------------------------------------------|
+| SonarQube project key mismatch   | Make sure your `pom.xml` and SonarQube dashboard use same key       |
+| Quality Gate not triggering      | Ensure Jenkins build actually **runs SonarQube scan** during build  |
+| Token invalid                    | Double-check you selected the **correct existing secret token**     |
+
+---
+
+## 📍 References
+
+- [SonarQube Docs](https://docs.sonarsource.com/)
+- [Quality Gates Plugin](https://plugins.jenkins.io/quality-gates/)
+
 📝 _This project is part of the #EverydayDevOps series._
 Happy automating! 🚀
