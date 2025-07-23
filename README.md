@@ -1091,6 +1091,46 @@ sudo systemctl restart jenkins
 
 8. This is the proper way to handle releases. Each deployment to maven-releases should have a unique version.
 
+![New Version Upload](images/image61.png)
+
+**`Option 2 (For Development/Testing: Deploy to Snapshots)`**
+
+- If you are still in active development and frequently deploying for testing purposes, you should deploy to the maven-snapshots repository. Snapshot repositories do allow overwriting artifacts with the same version.
+
+1. Open your pom.xml file.
+
+2. Find the `version` tag:
+
+     ```bash
+     <version>1.0</version>
+     ```
+
+3. Change it to a snapshot version by adding -SNAPSHOT to the end:
+
+     ```bash
+     <version>1.0-SNAPSHOT</version>
+     ```
+
+     ![Snapshot Version](images/image63.png)
+
+4. Save your pom.xml.
+
+5. Commit and push this change to your GitHub repository.
+
+6. Trigger a new build in Jenkins.
+
+**Maven will then automatically deploy to the snapshot Repository URL defined in your pom.xml because the version ends with -SNAPSHOT. This is ideal for continuous integration builds during development.**
+
+### Which option should you choose?
+
+- If 1.0 was truly a "final" release and you're now working on the next version, go with `Option 1 (1.1 or 1.0.1)`.
+
+- If you're still developing and testing frequently, and you want to keep deploying without constantly changing the version, go with `Option 2 (1.0-SNAPSHOT)`. 
+
+- You can always remove `-SNAPSHOT` when you're ready for a true release.
+
+- Choose the option that best fits your current development stage, make the change in your pom.xml, commit, push, and try the Jenkins build again!
+
 ---
 
 ## Day 6: ✅ SonarQube Quality Gates Integration (Jenkins + Existing Token)
